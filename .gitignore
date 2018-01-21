@@ -1,1 +1,4 @@
 sqat-analysis/bin
+.recommenders/
+/.metadata/
+*- Copy*

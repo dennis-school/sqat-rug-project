@@ -1,0 +1,3 @@
+nl.tudelft.jpacman.sprite cannot import nl.tudelft.jpacman.board
+nl.tudelft.jpacman.ui must import nl.tudelft.jpacman.board
+nl.tudelft.jpacman.ui.BoardPanel must depend nl.tudelft.jpacman.board

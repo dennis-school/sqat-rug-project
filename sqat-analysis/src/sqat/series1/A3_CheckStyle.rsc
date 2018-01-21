@@ -2,6 +2,11 @@ module sqat::series1::A3_CheckStyle
 
 import Java17ish;
 import Message;
+import util::FileSystem;
+import ParseTree;
+import IO;
+import Set;
+import util::ResourceMarkers;
 
 /*
 
@@ -41,11 +46,153 @@ Bonus:
 
 */
 
+// avoid star import
+// default comes last
+// general exception catching
+
+set[Message] checkStarImport( start[CompilationUnit] cu ) {
+  set[Message] result = {};
+  visit( cu ) {
+  case ImportDec i: {
+    switch ( i ) {
+    case (ImportDec)`import <PackageName _>.*;`: {
+      result += warning( "Star import", i@\loc );
+    }
+    }
+  }
+  }
+  return result;
+}
+
+set[Message] checkLastSwitchDefault( start[CompilationUnit] cu ) {
+  set[Message] result = {};
+  
+  visit ( cu ) {
+  case SwitchBlock g: {
+    bool hadDefault = false;
+    bool isOkay = true;
+    loc defaultLocation;
+    
+    visit ( g ) {
+    case SwitchLabel l: {
+      switch ( l ) {
+	    case (SwitchLabel)`default:`: {
+	      hadDefault = true;
+	      defaultLocation = l@\loc;
+	    }
+	    case (SwitchLabel)`case <Expr _>:`: {
+	      if ( hadDefault )
+	        isOkay = false;
+	    }
+      }
+    }
+    }
+    
+    if ( !isOkay ) {
+      result += warning( "Default case not at the end", defaultLocation );
+    }
+  }
+  }
+  return result;
+}
+
+set[Message] checkGeneralExceptionCatching( start[CompilationUnit] cu ) {
+  set[Message] result = {};
+  
+  visit ( cu ) {
+  case CatchClause clause: {
+    visit( clause ) {
+    case FormalParam p: {
+      switch ( p ) {
+	  case (FormalParam)`Exception <VarDecId d>`:
+	    result += warning( "Catching a general exception", p@\loc );
+	  case (FormalParam)`RuntimeException <VarDecId d>`:
+	    result += warning( "Catching a general exception", p@\loc );
+	  case (FormalParam)`Error <VarDecId d>`:
+	    result += warning( "Catching a general exception", p@\loc );
+      }
+    }
+    }
+  }
+  }
+  
+  return result;
+}
+
+set[Message] checkAssignments( Expr expression ) {
+  set[Message] result = {};
+  
+  visit ( expression ) {
+  case Expr subExpr: {
+    switch ( subExpr ) {
+    case (Expr)`<LHS _> *= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> |= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> &= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> \>\>= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> %= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> += <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> ^= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> = <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> /= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> \>\>\>= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+    case (Expr)`<LHS _> -= <Expr _>`: { result += warning( "Assignment used as value", subExpr@\loc ); }
+  }
+  }
+  }
+  
+  return result;
+}
+
+set[Message] checkAssignmentAsValue( start[CompilationUnit] cu ) {
+  set[Message] result = {};
+  
+  visit ( cu ) {
+  case VarDec v: {
+    visit ( v ) {
+    case Expr e: { result = union( { result, checkAssignments( e ) } ); }
+    }
+  }
+  case ConstrInv v: {
+    visit ( v ) {
+    case Expr e: { result = union( { result, checkAssignments( e ) } ); }
+    }
+  }
+  case (Expr)`<LHS _> *= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> |= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> &= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> \>\>= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> %= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> += <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> ^= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> = <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> /= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> \>\>\>= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  case (Expr)`<LHS _> -= <Expr e>`:  { result = union( { result, checkAssignments( e ) } ); }
+  }
+  
+  return result;
+}
+
 set[Message] checkStyle(loc project) {
   set[Message] result = {};
   
-  // to be done
-  // implement each check in a separate function called here. 
+  for ( loc l <- find( project, "java" ) ) {
+    start[CompilationUnit] cu = parse(#start[CompilationUnit], l, allowAmbiguity=true);
+    
+    result = union( { result, checkStarImport( cu ) } );
+    result = union( { result, checkLastSwitchDefault( cu ) } );
+    result = union( { result, checkGeneralExceptionCatching( cu ) } );
+    result = union( { result, checkAssignmentAsValue( cu ) } );
+  }
   
   return result;
+}
+
+void main( ) {
+  set[Message] msgs = checkStyle(|project://jpacman/|);
+  println( "Found style violations" );
+  for ( Message msg <- msgs ) {
+    println( msg );
+  }
+  addMessageMarkers(msgs);
 }
