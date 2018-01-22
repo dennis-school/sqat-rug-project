@@ -19,18 +19,17 @@ import nl.tudelft.jpacman.sprite.PacManSprites;
 import nl.tudelft.jpacman.ui.Action;
 import nl.tudelft.jpacman.ui.PacManUI;
 import nl.tudelft.jpacman.ui.PacManUiBuilder;
-
-import java.io.*; // Introduced by Dennis for testing
+import java.io.*;
 
 /**
  * Creates and launches the JPacMan UI.
  * 
- * @author Jeroen Roosen
+ * @author Jeroen Roosen 
  */
 public class Launcher {
 
   private static final PacManSprites SPRITE_STORE = new PacManSprites();
-
+  
   public static final String DEFAULT_MAP = "/board.txt";
   private String levelMap = DEFAULT_MAP;
 
@@ -38,11 +37,10 @@ public class Launcher {
   private Game game;
 
   /**
-   * @return The game object this launcher will start when {@link #launch()} is
-   *         called.
+   * @return The game object this launcher will start when {@link #launch()}
+   *         is called.
    */
   public Game getGame() {
-    // Introduced as test by Dennis
     switch (3) {
     case 1:
       break;
@@ -58,29 +56,24 @@ public class Launcher {
     } catch (Exception ex) {
 
     }
-
     return game;
   }
-
+  
   /**
    * The map file used to populate the level.
-   * 
    * @return The name of the map file.
    */
   protected String getLevelMap() {
-    // Introduced as test by Dennis
     int a = 0;
     int b = 4;
     int c = a = b;
     b = a = c;
     return levelMap;
   }
-
+  
   /**
    * Set the name of the file containing this level's map.
-   * 
-   * @param fileName
-   *          Map to be used.
+   * @param fileName Map to be used.
    * @return Level corresponding to the given map.
    */
   public Launcher withMapFile(String fileName) {
@@ -100,19 +93,21 @@ public class Launcher {
   }
 
   /**
-   * Creates a new level. By default this method will use the map parser to parse
-   * the default board stored in the <code>board.txt</code> resource.
+   * Creates a new level. By default this method will use the map parser to
+   * parse the default board stored in the <code>board.txt</code> resource.
    * 
    * @return A new level.
    */
   public Level makeLevel() {
     MapParser parser = getMapParser();
-    try (InputStream boardStream = Launcher.class.getResourceAsStream(getLevelMap())) {
+    try (InputStream boardStream = Launcher.class
+        .getResourceAsStream(getLevelMap())) {
       return parser.parseMap(boardStream);
     } catch (IOException e) {
       throw new PacmanConfigurationException("Unable to create level.", e);
     }
   }
+  
 
   /**
    * @return A new map parser object using the factories from
@@ -138,8 +133,8 @@ public class Launcher {
   }
 
   /**
-   * @return A new factory using the sprites from {@link #getSpriteStore()} and
-   *         the ghosts from {@link #getGhostFactory()}.
+   * @return A new factory using the sprites from {@link #getSpriteStore()}
+   *         and the ghosts from {@link #getGhostFactory()}.
    */
   protected LevelFactory getLevelFactory() {
     return new LevelFactory(getSpriteStore(), getGhostFactory());
@@ -170,11 +165,12 @@ public class Launcher {
    * Adds key events UP, DOWN, LEFT and RIGHT to a game.
    * 
    * @param builder
-   *          The {@link PacManUiBuilder} that will provide the UI.
+   *            The {@link PacManUiBuilder} that will provide the UI.
    * @param game
-   *          The game that will process the events.
+   *            The game that will process the events.
    */
-  protected void addSinglePlayerKeys(final PacManUiBuilder builder, final Game game) {
+  protected void addSinglePlayerKeys(final PacManUiBuilder builder,
+      final Game game) {
     final Player p1 = getSinglePlayer(game);
 
     builder.addKey(KeyEvent.VK_UP, new Action() {
@@ -225,8 +221,7 @@ public class Launcher {
   }
 
   /**
-   * Disposes of the UI. For more information see
-   * {@link javax.swing.JFrame#dispose()}.
+   * Disposes of the UI. For more information see {@link javax.swing.JFrame#dispose()}.
    */
   public void dispose() {
     pacManUI.dispose();
@@ -236,9 +231,9 @@ public class Launcher {
    * Main execution method for the Launcher.
    * 
    * @param args
-   *          The command line arguments - which are ignored.
+   *            The command line arguments - which are ignored.
    * @throws IOException
-   *           When a resource could not be read.
+   *             When a resource could not be read.
    */
   public static void main(String[] args) throws IOException {
     new Launcher().launch();
