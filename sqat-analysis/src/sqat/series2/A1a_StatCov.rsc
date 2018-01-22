@@ -69,6 +69,8 @@ void main( ) {
   set[loc] reachableMethods = { entry[1] | caller <- testMethods, entry <- methodInvokesTrans[caller] };
   set[loc] unreachableMethods = allMethods - reachableMethods - testMethods;
   
+  // ## ANSWERS TO QUESTIONS ##
+  
   println( "Unreachable methods:" );
   for ( m <- unreachableMethods )
     println( m );

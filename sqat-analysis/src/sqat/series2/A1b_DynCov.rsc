@@ -327,6 +327,8 @@ BlockStm* putAfterEvery(BlockStm* stms, BlockStm(loc) f) {
   Block put(b:(Block)`{}`) = (Block)`{<BlockStm s>}`
     when BlockStm s := f(b@\loc);
   
+  // Cases to prevent Java compiler complaining about "dead code"
+  // (e.g. don't insert after return statement)
   default bool isEnd(BlockStm s) = false;
   bool isEnd((BlockStm)`return <Expr? _>;`) = true;
   bool isEnd((BlockStm)`break <Id? _>;`) = true;
